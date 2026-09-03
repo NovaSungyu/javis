@@ -51,6 +51,45 @@ def show_system_status():
 
     console.print(table)
 
+def handsfree_voice_loop(jarvis: JarvisLLM):
+    """Continuous hands-free voice loop mode: listens, acts, and responds aloud in a continuous cycle."""
+    console.print(Panel("[bold green]🎙️ Hands-Free Voice Mode Activated![/bold green]\nSay 'exit', 'quit', or '종료' to return to terminal.", border_style="green"))
+    if TermuxBridge.is_termux_available():
+        TermuxBridge.speak("Hands free voice mode activated, Sir. I am listening.")
+
+    while True:
+        try:
+            console.print("\n[bold green]🎤 Listening... (Speak your command)[/bold green]")
+            spoken_text = TermuxBridge.speech_to_text()
+
+            if not spoken_text:
+                console.print("[dim yellow]No speech detected. Listening again...[/dim yellow]")
+                time.sleep(1)
+                continue
+
+            console.print(f"[bold cyan]You (Voice):[/bold cyan] {spoken_text}")
+            cmd = spoken_text.strip().lower()
+
+            if cmd in ["exit", "quit", "stop", "종료", "그만", "꺼줘"]:
+                farewell = "Exiting hands-free voice mode, Sir."
+                console.print(f"[bold yellow]{farewell}[/bold yellow]")
+                if TermuxBridge.is_termux_available():
+                    TermuxBridge.speak(farewell)
+                break
+
+            with console.status("[bold bright_blue]J.A.R.V.I.S. processing...[/bold bright_blue]", spinner="dots"):
+                response = jarvis.send_message(spoken_text)
+
+            console.print(Panel(response, title="J.A.R.V.I.S.", title_align="left", border_style="bright_blue"))
+            TermuxBridge.speak(response)
+
+        except KeyboardInterrupt:
+            console.print("\n[bold red]Hands-free mode stopped by user.[/bold red]")
+            break
+        except Exception as e:
+            console.print(f"[bold red]Voice Mode Error:[/bold red] {e}")
+            break
+
 def main():
     os.system("clear" if os.name != "nt" else "cls")
     render_banner()
@@ -61,7 +100,7 @@ def main():
     show_system_status()
     
     console.print("\n[bold yellow]System Initialized.[/bold yellow] Type [bold green]/help[/bold green] for command list.")
-    console.print("[dim]Commands: /voice (voice input), /speak (toggle TTS), /status (diagnostics), /exit (quit)[/dim]\n")
+    console.print("[dim]Commands: /handsfree (continuous voice), /voice (one-shot voice), /speak (toggle TTS), /status, /exit[/dim]\n")
 
     if not jarvis.is_configured():
         console.print(
@@ -69,6 +108,11 @@ def main():
             "Please add your key to [bold].env[/bold] file or set it using:\n"
             "[bold cyan]export GEMINI_API_KEY='your_api_key_here'[/bold cyan]\n"
         )
+
+    # Check command-line argument for instant hands-free start (python main.py --voice)
+    if len(sys.argv) > 1 and sys.argv[1] in ["--voice", "-v", "--handsfree"]:
+        handsfree_voice_loop(jarvis)
+        return
 
     # Startup Greeting
     greeting = "Good day, Sir. J.A.R.V.I.S. is online and ready for your command."
@@ -94,12 +138,17 @@ def main():
             elif cmd == "/help":
                 console.print(
                     "[bold yellow]JARVIS Command Menu:[/bold yellow]\n"
-                    " - [cyan]/voice[/cyan]   : Record voice command via speech recognition\n"
-                    " - [cyan]/speak[/cyan]   : Toggle automatically speaking responses via TTS\n"
-                    " - [cyan]/status[/cyan]  : Display system diagnostics & battery status\n"
-                    " - [cyan]/clear[/cyan]   : Clear terminal screen\n"
-                    " - [cyan]/exit[/cyan]    : Power down JARVIS\n"
+                    " - [cyan]/handsfree[/cyan] : Continuous Hands-Free Voice Mode (Full automatic voice conversation loop)\n"
+                    " - [cyan]/voice[/cyan]     : Record a single voice command\n"
+                    " - [cyan]/speak[/cyan]     : Toggle automatically speaking responses via TTS\n"
+                    " - [cyan]/status[/cyan]    : Display system diagnostics & battery status\n"
+                    " - [cyan]/clear[/cyan]     : Clear terminal screen\n"
+                    " - [cyan]/exit[/cyan]      : Power down JARVIS\n"
                 )
+                continue
+
+            elif cmd in ["/handsfree", "/hf", "/hands-free"]:
+                handsfree_voice_loop(jarvis)
                 continue
 
             elif cmd == "/speak":
@@ -143,4 +192,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
