@@ -1,35 +1,28 @@
 #!/usr/bin/bash
 
 echo "=========================================="
-echo "    J.A.R.V.I.S. Termux Standalone Installer "
+echo "    J.A.R.V.I.S. Ultra-Light Installer   "
 echo "=========================================="
 
-# 1. Update Termux repositories
-echo "[1/4] Updating Termux packages..."
+# 1. Update packages & install python, git, mpv player
+echo "[1/3] Installing Python, Git, and MPV..."
 pkg update -y
+pkg install -y python git mpv
 
-# 2. Install essential packages and audio player for standalone voice
-echo "[2/4] Installing Python, Git, mpv, and compilers..."
-pkg install -y python git mpv clang rust binutils libffi openssl
+# 2. Install lightweight Python dependencies (Installs in 3 seconds!)
+echo "[2/3] Installing lightweight Python libraries..."
+pip install requests python-dotenv rich gTTS
 
-# 3. Install Python dependencies
-echo "[3/4] Installing Python dependencies..."
-pip install -r requirements.txt
-
-# 4. Create .env configuration file if missing
+# 3. Create .env configuration file
 if [ ! -f .env ]; then
-    echo "[4/4] Creating .env file..."
+    echo "[3/3] Creating .env template..."
     echo "GEMINI_API_KEY=" > .env
     echo "JARVIS_MODEL=gemini-2.5-flash" >> .env
-    echo "Created .env template. Please enter your GEMINI_API_KEY in .env!"
-else
-    echo "[4/4] .env file already exists."
 fi
 
 echo "=========================================="
 echo " Setup complete!                          "
-echo " 1. Edit .env file to set your API Key:  "
-echo "    echo \"GEMINI_API_KEY=your_key\" > .env "
-echo " 2. Run JARVIS:                           "
-echo "    python main.py                        "
+echo " Run:                                     "
+echo "   echo \"GEMINI_API_KEY=your_key\" > .env   "
+echo "   python main.py                         "
 echo "=========================================="
