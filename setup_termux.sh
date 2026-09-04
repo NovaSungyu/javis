@@ -6,16 +6,15 @@ echo "=========================================="
 
 # 1. Update Termux repositories
 echo "[1/4] Updating Termux packages..."
-pkg update -y && pkg upgrade -y
+pkg update -y
 
-# 2. Install essential packages
-echo "[2/4] Installing Python, Git, and Termux-API..."
-pkg install -y python git termux-api
+# 2. Install essential packages and pre-compiled Python binaries
+echo "[2/4] Installing Python, Git, Termux-API, and binary wheels..."
+pkg install -y python git termux-api python-pydantic python-rich python-requests python-dotenv
 
-# 3. Install Python dependencies
-echo "[3/4] Installing Python dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
+# 3. Install Python GenAI dependencies
+echo "[3/4] Installing Google GenAI SDK..."
+pip install google-genai
 
 # 4. Create .env configuration file if missing
 if [ ! -f .env ]; then
@@ -30,8 +29,7 @@ fi
 echo "=========================================="
 echo " Setup complete!                          "
 echo " 1. Edit .env file to set your API Key:  "
-echo "    nano .env                             "
+echo "    echo \"GEMINI_API_KEY=your_key\" > .env "
 echo " 2. Run JARVIS:                           "
-echo "    python main.py                        "
+echo "    python main.py --voice                "
 echo "=========================================="
-
