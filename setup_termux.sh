@@ -8,13 +8,13 @@ echo "=========================================="
 echo "[1/4] Updating Termux packages..."
 pkg update -y
 
-# 2. Install essential packages and pre-compiled Python binaries
-echo "[2/4] Installing Python, Git, Termux-API, and binary wheels..."
-pkg install -y python git termux-api python-pydantic python-rich python-requests python-dotenv
+# 2. Install essential packages, C/Rust compilers for wheels
+echo "[2/4] Installing Python, Git, Termux-API, Clang, and Rust compilers..."
+pkg install -y python git termux-api clang rust binutils libffi openssl
 
-# 3. Install Python GenAI dependencies
-echo "[3/4] Installing Google GenAI SDK..."
-pip install google-genai
+# 3. Install Python dependencies
+echo "[3/4] Installing Python dependencies..."
+pip install -r requirements.txt
 
 # 4. Create .env configuration file if missing
 if [ ! -f .env ]; then
