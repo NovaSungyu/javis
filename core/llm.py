@@ -32,15 +32,16 @@ class JarvisLLM:
         if len(self.history) > 10:
             self.history = self.history[-10:]
 
-        # Correct camelCase systemInstruction for Gemini REST API
         payload = {
             "systemInstruction": {"parts": [{"text": JARVIS_SYSTEM_PROMPT}]},
             "contents": self.history
         }
 
-        # Candidate models list for REST API
-        candidate_models = [self.model_name, "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+        # Preferred models
+        candidate_models = ["gemini-1.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro"]
         headers = {"Content-Type": "application/json"}
+
+        last_error = ""
 
         for model in candidate_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
@@ -54,12 +55,12 @@ class JarvisLLM:
                         return reply_text
                     except (KeyError, IndexError):
                         return "Standing by, Sir."
-                elif resp.status_code in [404, 400]:
-                    # Try next model if bad request model name or not found
-                    continue
                 else:
-                    return f"Gemini API Notice ({resp.status_code}): {resp.text}"
+                    last_error = f"Gemini API Error [{resp.status_code}]: {resp.text}"
+                    # If invalid key, stop looping and return error directly
+                    if "API_KEY_INVALID" in resp.text or resp.status_code == 400:
+                        return f"API Key Issue ({resp.status_code}): Please verify your Gemini API key."
             except Exception as e:
-                return f"Apologies, Sir. Connection issue: {str(e)}"
+                last_error = f"Connection error: {str(e)}"
 
-        return "Apologies, Sir. Please check your Gemini API key format or internet connection."
+        return last_error or "Apologies, Sir. Connection issue encountered."
