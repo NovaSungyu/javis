@@ -6,7 +6,7 @@ from config import GEMINI_API_KEY, DEFAULT_MODEL, JARVIS_SYSTEM_PROMPT
 from core import tools
 
 class JarvisLLM:
-    """Ultra-lightweight Gemini LLM Manager with 100% universal payload compatibility."""
+    """Ultra-lightweight Gemini LLM Manager with robust API key cleaning and endpoint resolution."""
 
     def __init__(self, api_key: str = GEMINI_API_KEY, model_name: str = DEFAULT_MODEL):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
@@ -17,8 +17,11 @@ class JarvisLLM:
         return bool(self.api_key or os.getenv("GEMINI_API_KEY"))
 
     def send_message(self, user_text: str) -> str:
-        """Send message to Gemini REST API with universal payload format."""
-        api_key = (self.api_key or os.getenv("GEMINI_API_KEY", "")).strip().strip("'").strip('"')
+        """Send message to Gemini REST API and handle responses."""
+        raw_key = self.api_key or os.getenv("GEMINI_API_KEY", "")
+        # Clean API key from whitespace, quotes, or accidental newlines
+        api_key = "".join(c for c in raw_key if c.isalnum() or c in "_-")
+        
         if not api_key:
             return (
                 "Sir, GEMINI_API_KEY is missing.\n"
@@ -36,18 +39,20 @@ class JarvisLLM:
         if len(self.history) > 10:
             self.history = self.history[-10:]
 
-        payload = {
-            "contents": self.history
-        }
+        payload = {"contents": self.history}
         headers = {"Content-Type": "application/json"}
 
-        # Active production models
-        candidate_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+        # Tried endpoints for max compatibility
+        candidate_urls = [
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
+            f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
+        ]
 
         last_error = ""
 
-        for model in candidate_models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        for url in candidate_urls:
             try:
                 resp = requests.post(url, headers=headers, json=payload, timeout=15)
                 if resp.status_code == 200:
@@ -59,7 +64,10 @@ class JarvisLLM:
                     except (KeyError, IndexError):
                         return "Standing by, Sir."
                 else:
-                    last_error = f"Gemini API Notice [{resp.status_code}]: {resp.text}"
+                    last_error = f"API Notice [{resp.status_code}]: {resp.text}"
+                    # If invalid key format, report directly
+                    if "API_KEY_INVALID" in resp.text:
+                        return f"Invalid API Key. Please verify your Gemini API key (Key length: {len(api_key)})."
             except Exception as e:
                 last_error = f"Connection error: {str(e)}"
 
