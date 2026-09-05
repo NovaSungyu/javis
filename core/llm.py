@@ -6,11 +6,11 @@ from config import GEMINI_API_KEY, DEFAULT_MODEL, JARVIS_SYSTEM_PROMPT
 from core import tools
 
 class JarvisLLM:
-    """Ultra-lightweight Gemini LLM Manager using direct REST API with automatic model fallbacks."""
+    """Ultra-lightweight Gemini LLM Manager using direct REST API."""
 
     def __init__(self, api_key: str = GEMINI_API_KEY, model_name: str = DEFAULT_MODEL):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
-        self.model_name = model_name or os.getenv("JARVIS_MODEL", "gemini-2.5-flash")
+        self.model_name = os.getenv("JARVIS_MODEL", "gemini-1.5-flash")
         self.history = []
 
     def is_configured(self) -> bool:
@@ -18,7 +18,7 @@ class JarvisLLM:
 
     def send_message(self, user_text: str) -> str:
         """Send message to Gemini REST API and handle responses."""
-        api_key = self.api_key or os.getenv("GEMINI_API_KEY", "")
+        api_key = (self.api_key or os.getenv("GEMINI_API_KEY", "")).strip().strip("'").strip('"')
         if not api_key:
             return (
                 "Sir, GEMINI_API_KEY is missing.\n"
@@ -32,13 +32,14 @@ class JarvisLLM:
         if len(self.history) > 10:
             self.history = self.history[-10:]
 
+        # Correct camelCase systemInstruction for Gemini REST API
         payload = {
-            "system_instruction": {"parts": [{"text": JARVIS_SYSTEM_PROMPT}]},
+            "systemInstruction": {"parts": [{"text": JARVIS_SYSTEM_PROMPT}]},
             "contents": self.history
         }
 
-        # Candidate models list for seamless fallback
-        candidate_models = [self.model_name, "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]
+        # Candidate models list for REST API
+        candidate_models = [self.model_name, "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
         headers = {"Content-Type": "application/json"}
 
         for model in candidate_models:
@@ -53,11 +54,12 @@ class JarvisLLM:
                         return reply_text
                     except (KeyError, IndexError):
                         return "Standing by, Sir."
-                elif resp.status_code == 404:
-                    continue  # Try fallback model
+                elif resp.status_code in [404, 400]:
+                    # Try next model if bad request model name or not found
+                    continue
                 else:
                     return f"Gemini API Notice ({resp.status_code}): {resp.text}"
             except Exception as e:
                 return f"Apologies, Sir. Connection issue: {str(e)}"
 
-        return "Apologies, Sir. Unable to connect to Gemini model API."
+        return "Apologies, Sir. Please check your Gemini API key format or internet connection."

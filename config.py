@@ -6,8 +6,8 @@ load_dotenv()
 # Gemini API Key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-# Default Model (Gemini 2.5 Flash is fast and ideal for voice/terminal)
-DEFAULT_MODEL = os.getenv("JARVIS_MODEL", "gemini-2.5-flash")
+# Default Model (Gemini 1.5 Flash is standard for Gemini REST API)
+DEFAULT_MODEL = os.getenv("JARVIS_MODEL", "gemini-1.5-flash")
 
 # JARVIS System Prompt
 JARVIS_SYSTEM_PROMPT = """You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an advanced AI assistant created to assist the user.
@@ -20,4 +20,3 @@ Core Directives:
 4. When performing device actions, inform the user with a calm, confident, and witty tone typical of Iron Man's JARVIS.
 5. Prioritize short responses suitable for terminal screens and Text-to-Speech output.
 """
-
