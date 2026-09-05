@@ -6,7 +6,7 @@ from config import GEMINI_API_KEY, DEFAULT_MODEL, JARVIS_SYSTEM_PROMPT
 from core import tools
 
 class JarvisLLM:
-    """Ultra-lightweight LLM Manager supporting Google Gemini API & Groq Free API."""
+    """Ultra-lightweight LLM Manager supporting Google Gemini API (AIza / AQ formats) & Groq."""
 
     def __init__(self, api_key: str = GEMINI_API_KEY, model_name: str = DEFAULT_MODEL):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "") or os.getenv("GROQ_API_KEY", "")
@@ -19,7 +19,8 @@ class JarvisLLM:
     def send_message(self, user_text: str) -> str:
         """Send message to Gemini REST API or Groq API."""
         raw_key = self.api_key or os.getenv("GEMINI_API_KEY", "") or os.getenv("GROQ_API_KEY", "")
-        api_key = "".join(c for c in raw_key if c.isalnum() or c in "_-").strip()
+        # Strip only enclosing whitespace/quotes, preserving all valid key characters (+, /, =, _, -, .)
+        api_key = raw_key.strip().strip("'").strip('"')
 
         if not api_key:
             return (
@@ -34,7 +35,7 @@ class JarvisLLM:
         return self._send_gemini_message(user_text, api_key)
 
     def _send_groq_message(self, user_text: str, api_key: str) -> str:
-        """Handle Groq AI API calls (Ultra fast, 100% free, Llama 3 models)."""
+        """Handle Groq AI API calls."""
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -65,7 +66,7 @@ class JarvisLLM:
             return f"Groq Connection Error: {str(e)}"
 
     def _send_gemini_message(self, user_text: str, api_key: str) -> str:
-        """Handle Google Gemini REST API calls."""
+        """Handle Google Gemini REST API calls supporting AIza and AQ authentication methods."""
         masked_key = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
 
         if not self.history:
@@ -78,19 +79,35 @@ class JarvisLLM:
             self.history = self.history[-10:]
 
         payload = {"contents": self.history}
-        headers = {"Content-Type": "application/json"}
 
-        candidate_urls = [
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
-            f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}",
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}",
+        # Multi-strategy authentication:
+        # 1. Official Google Header (x-goog-api-key) - Standard for modern Google Cloud & AI Studio
+        # 2. Query param (?key=)
+        # 3. Bearer Token (Authorization: Bearer) - Standard for AQ... OAuth/STS tokens
+        auth_strategies = [
+            {
+                "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                "headers": {"Content-Type": "application/json", "x-goog-api-key": api_key}
+            },
+            {
+                "url": f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
+                "headers": {"Content-Type": "application/json"}
+            },
+            {
+                "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                "headers": {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+            },
+            {
+                "url": f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}",
+                "headers": {"Content-Type": "application/json"}
+            }
         ]
 
         last_error = ""
 
-        for url in candidate_urls:
+        for req in auth_strategies:
             try:
-                resp = requests.post(url, headers=headers, json=payload, timeout=15)
+                resp = requests.post(req["url"], headers=req["headers"], json=payload, timeout=15)
                 if resp.status_code == 200:
                     data = resp.json()
                     try:
