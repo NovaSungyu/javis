@@ -32,7 +32,7 @@ def show_system_status():
     table.add_column("Status", style="green")
 
     # Termux API Check
-    api_avail = TermuxBridge.is_termux_available()
+    api_avail = TermuxBridge.is_termux_api_available()
     table.add_row("Termux Hardware API", "ONLINE" if api_avail else "OFFLINE (Mock Mode)")
 
     # Battery
@@ -54,7 +54,7 @@ def show_system_status():
 def handsfree_voice_loop(jarvis: JarvisLLM):
     """Continuous hands-free voice loop mode: listens, acts, and responds aloud in a continuous cycle."""
     console.print(Panel("[bold green]🎙️ Hands-Free Voice Mode Activated![/bold green]\nSay 'exit', 'quit', or '종료' to return to terminal.", border_style="green"))
-    if TermuxBridge.is_termux_available():
+    if TermuxBridge.is_termux_api_available():
         TermuxBridge.speak("Hands free voice mode activated, Sir. I am listening.")
 
     while True:
@@ -73,7 +73,7 @@ def handsfree_voice_loop(jarvis: JarvisLLM):
             if cmd in ["exit", "quit", "stop", "종료", "그만", "꺼줘"]:
                 farewell = "Exiting hands-free voice mode, Sir."
                 console.print(f"[bold yellow]{farewell}[/bold yellow]")
-                if TermuxBridge.is_termux_available():
+                if TermuxBridge.is_termux_api_available():
                     TermuxBridge.speak(farewell)
                 break
 
@@ -117,7 +117,7 @@ def main():
     # Startup Greeting
     greeting = "Good day, Sir. J.A.R.V.I.S. is online and ready for your command."
     console.print(Panel(greeting, title="J.A.R.V.I.S.", title_align="left", border_style="bright_blue"))
-    if TermuxBridge.is_termux_available():
+    if TermuxBridge.is_termux_api_available():
         TermuxBridge.speak("Good day Sir. JARVIS is online.")
 
     while True:
@@ -131,7 +131,7 @@ def main():
             if cmd in ["exit", "quit", "/exit", "/quit", "/q"]:
                 farewell = "Shutting down J.A.R.V.I.S. core systems. Have a pleasant day, Sir."
                 console.print(Panel(farewell, title="J.A.R.V.I.S.", border_style="red"))
-                if auto_speak and TermuxBridge.is_termux_available():
+                if auto_speak and TermuxBridge.is_termux_api_available():
                     TermuxBridge.speak(farewell)
                 break
 

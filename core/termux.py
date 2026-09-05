@@ -14,6 +14,12 @@ class TermuxBridge:
         return shutil.which("termux-battery-status") is not None
 
     @classmethod
+    def is_termux_available(cls) -> bool:
+        """Alias for is_termux_api_available for backward compatibility."""
+        return cls.is_termux_api_available()
+
+
+    @classmethod
     def run_cmd(cls, command: list[str]) -> Optional[str]:
         """Execute a termux-api command safely."""
         if not cls.is_termux_api_available():

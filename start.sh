@@ -9,3 +9,4 @@ if [ ! -f .env ] || ! grep -q "GEMINI_API_KEY=AIza" .env 2>/dev/null; then
     echo "API Key Saved!"
 fi
 python main.py "$@"
+
