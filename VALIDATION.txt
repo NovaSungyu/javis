@@ -1,0 +1,67 @@
+JARVIS 통합판 3.0 검증 기록
+검증일: 2026-11-11 (Asia/Seoul)
+환경: Windows, Python 3.12.14
+
+PASS: 자동 테스트 41개 (AI API와 휴대폰 장치는 모의 응답으로 대체)
+PASS: main.py --version
+PASS: javis.py --check (Termux 미설치 상태를 실패로 정확히 표시)
+PASS: 실제 CLI 시작/입력/종료, API 키 없는 대화 안내
+PASS: CLI 타이머 등록/조회/취소 및 재실행 후 상태 유지
+PASS: CLI 대화 기록 재실행 후 복원
+PASS: 모든 Python 파일 문법 검사
+PASS: setup_termux.sh 및 start.sh의 Bash 문법과 LF 줄바꿈
+
+실행하지 않은 검증:
+- Android Termux 실기기 마이크, TTS, 카메라, GPS, 손전등, 알림, 음악 재생
+- 실제 Gemini/Groq API 키를 사용한 대화와 모델별 도구/이미지 호환성
+- 실제 Open-Meteo/DuckDuckGo 응답을 이용한 종단 간 기능
+- Android 백그라운드/배터리 제한 중 타이머 전달
+- GitHub Actions 원격 실행 (설정 파일만 포함)
+
+자동 테스트 상세:
+test_api_failure_does_not_execute_tools (test_jarvis.AITests.test_api_failure_does_not_execute_tools) ... ok
+test_call_limit_stops_model_loop (test_jarvis.AITests.test_call_limit_stops_model_loop) ... ok
+test_explicit_toggle_sequence_is_not_deduplicated (test_jarvis.AITests.test_explicit_toggle_sequence_is_not_deduplicated) ... ok
+test_followup_failure_preserves_completed_action (test_jarvis.AITests.test_followup_failure_preserves_completed_action) ... ok
+test_gemini_deduplicates_repeated_call (test_jarvis.AITests.test_gemini_deduplicates_repeated_call) ... ok
+test_gemini_executes_and_returns_tool_results_with_signature (test_jarvis.AITests.test_gemini_executes_and_returns_tool_results_with_signature) ... ok
+test_groq_tool_call_protocol (test_jarvis.AITests.test_groq_tool_call_protocol) ... ok
+test_invalid_groq_arguments_do_not_run_action (test_jarvis.AITests.test_invalid_groq_arguments_do_not_run_action) ... ok
+test_malformed_followup_still_preserves_action_log (test_jarvis.AITests.test_malformed_followup_still_preserves_action_log) ... ok
+test_missing_keys_work_without_network (test_jarvis.AITests.test_missing_keys_work_without_network) ... ok
+test_model_discovery_uses_only_accessible_models_and_pages (test_jarvis.AITests.test_model_discovery_uses_only_accessible_models_and_pages) ... ok
+test_bad_command_and_invalid_timer (test_jarvis.AppTests.test_bad_command_and_invalid_timer) ... ok
+test_camera_decline_does_not_capture (test_jarvis.AppTests.test_camera_decline_does_not_capture) ... ok
+test_camera_temp_file_removed_on_api_failure (test_jarvis.AppTests.test_camera_temp_file_removed_on_api_failure) ... ok
+test_clipboard_not_saved_or_sent (test_jarvis.AppTests.test_clipboard_not_saved_or_sent) ... ok
+test_external_text_cannot_emit_terminal_controls (test_jarvis.AppTests.test_external_text_cannot_emit_terminal_controls) ... ok
+test_local_command_needs_no_key_and_never_contacts_ai (test_jarvis.AppTests.test_local_command_needs_no_key_and_never_contacts_ai) ... ok
+test_voice_stops_after_three_empty_inputs (test_jarvis.AppTests.test_voice_stops_after_three_empty_inputs) ... ok
+test_env_does_not_execute_text_and_environment_wins (test_jarvis.ConfigTests.test_env_does_not_execute_text_and_environment_wins) ... ok
+test_invalid_provider (test_jarvis.ConfigTests.test_invalid_provider) ... ok
+test_literal_newline_is_rejected (test_jarvis.ConfigTests.test_literal_newline_is_rejected) ... ok
+test_provider_and_legacy_key (test_jarvis.ConfigTests.test_provider_and_legacy_key) ... ok
+test_shipped_config_has_real_newlines (test_jarvis.ConfigTests.test_shipped_config_has_real_newlines) ... ok
+test_http_errors_do_not_expose_response_or_keys (test_jarvis.HTTPTests.test_http_errors_do_not_expose_response_or_keys) ... ok
+test_network_error_is_actionable (test_jarvis.HTTPTests.test_network_error_is_actionable) ... ok
+test_limits_keep_complete_pairs (test_jarvis.MemoryTests.test_limits_keep_complete_pairs) ... ok
+test_restart_pairs_and_local_privacy (test_jarvis.MemoryTests.test_restart_pairs_and_local_privacy) ... ok
+test_sql_parameterization_and_forget_preserves_timers (test_jarvis.MemoryTests.test_sql_parameterization_and_forget_preserves_timers) ... ok
+test_clipboard_uses_stdin_without_shell (test_jarvis.PhoneTests.test_clipboard_uses_stdin_without_shell) ... ok
+test_invalid_location_does_not_fall_back_to_seoul (test_jarvis.PhoneTests.test_invalid_location_does_not_fall_back_to_seoul) ... ok
+test_json_error_even_with_zero_exit (test_jarvis.PhoneTests.test_json_error_even_with_zero_exit) ... ok
+test_missing_command_never_reports_success (test_jarvis.PhoneTests.test_missing_command_never_reports_success) ... ok
+test_nonzero_exit_and_timeout (test_jarvis.PhoneTests.test_nonzero_exit_and_timeout) ... ok
+test_cancel_prevents_delivery (test_jarvis.TimerTests.test_cancel_prevents_delivery) ... ok
+test_due_timer_survives_restart_and_fires_once (test_jarvis.TimerTests.test_due_timer_survives_restart_and_fires_once) ... ok
+test_interrupted_delivery_not_silently_retried (test_jarvis.TimerTests.test_interrupted_delivery_not_silently_retried) ... ok
+test_notification_failure_is_recorded (test_jarvis.TimerTests.test_notification_failure_is_recorded) ... ok
+test_arguments_checked_before_side_effect (test_jarvis.ToolTests.test_arguments_checked_before_side_effect) ... ok
+test_natural_commands_are_anchored (test_jarvis.ToolTests.test_natural_commands_are_anchored) ... ok
+test_search_handles_nested_topics_and_includes_sources (test_jarvis.ToolTests.test_search_handles_nested_topics_and_includes_sources) ... ok
+test_weather_stops_before_network_if_gps_fails (test_jarvis.ToolTests.test_weather_stops_before_network_if_gps_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 1.588s
+
+OK
